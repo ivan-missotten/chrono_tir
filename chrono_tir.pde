@@ -22,7 +22,6 @@ LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
 
 long commencement;
 
-int etatclear;
 int minutePasser;
 int secondePasser;
 int minuteTotal;
@@ -64,7 +63,6 @@ bool chrono = false;
 
 void setup()
 { 
-  etatclear = 0;
   minutePasser = 0;
   secondePasser = 0;
   minuteTotal = 0;
@@ -101,7 +99,7 @@ void loop ()
   
 void actionconteur() // fonction principal (conteur).
 {
-  if (digitalRead(btnDroit) == LOW)
+  if (digitalRead(btnDroit), LOW)
   {
     etat = MENU;
   }
@@ -118,67 +116,51 @@ void actionconteur() // fonction principal (conteur).
           
 void conteur ()
 {
-  if (digitalRead(7) == LOW)
+  static unsigned long currentMillis = 0;
+  if ((millis() - currentMillis) > 1000)
   {
     chrono = true;
-    while(chrono == true)
+    if (secondes > 0)
+      secondes --;
+    else if(minutes > 0) 
     {
-    sortieConteur();
-    printConteur();
-    ledState();
-    gestionLigne();
-    printmenu();
-    static unsigned long currentMillis = 0;
-    if ((millis() - currentMillis) > 1000)
+      secondes = 59;
+      minutes --;
+    }
+    if (minutes == 2 && secondes == 9)
     {
-      if (secondes > 0)
-        secondes --;
-      else if(minutes > 0) 
-      {
-        secondes = 59;
-        minutes --;
-      }
-      if (minutes == 2 && secondes == 9)
-      {
-        Serial.print ("rouge");
-        color = rouge;
-      }
-      if (minutes == 2 && secondes == 0)
-      {
-        color = rouge;
-        Serial.print("rouge \n");
-      }
-      if (minutes >= 0 && secondes > 30) 
-      {
-         color = vert;
-         Serial.print("vert \n");
-      } 
-      if (minutes == 0 && secondes == 0) 
-      {
-         while (changement =! 0 && changement > 0)
-         {
-         changement --;
-         Serial.println(ligne);
-         }
-         color = rouge;
-         Serial.print("rouge \n");
-      } 
-      else if(minutes == 0 && secondes <= 30) 
-      {
-         color = orange;
-         Serial.print("orange \n");
-      }
-      currentMillis = millis();
+      Serial.print ("rouge");
+      color = rouge;
     }
+    if (minutes == 2 && secondes == 0)
+    {
+      color = rouge;
+      Serial.print("rouge \n");
     }
+    if (minutes >= 0 && secondes > 30) 
+    {
+       color = vert;
+       Serial.print("vert \n");
+    } 
+    if (minutes == 0 && secondes == 0) 
+    {
+       while (changement =! 0 && changement > 0)
+       {
+       changement --;
+       Serial.println(ligne);
+       }
+       color = rouge;
+       Serial.print("rouge \n");
+    } 
+    else if(minutes == 0 && secondes <= 30) 
+    {
+       color = orange;
+       Serial.print("orange \n");
+    }
+    currentMillis = millis();
   }
 }
-//---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-void sortieConteur()
-{
-    chrono == false;
-}
 //---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 void printConteur()
@@ -315,8 +297,8 @@ void printmenu()
     if (chrono == true)
     {
       lcd.setCursor (-4, 3);
-      lcd.print ("       ");
-      lcd.setCursor (2, 3);
+      lcd.print ("     ");
+      lcd.setCursor (1, 3);
       lcd.print ("Stop ");
       lcd.setCursor (7, 3);
       lcd.print("     "); 
@@ -333,11 +315,6 @@ void printmenu()
 
 void actionmenu() // setup de la carte.
 {
-  while (etatclear == 0)
-  {
-    lcd.clear();
-    etatclear ++;
-  }
   affichagemenu();
   setupTemp();
   setupLigne();
