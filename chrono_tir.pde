@@ -22,6 +22,11 @@ LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
 
 long commencement;
 
+int etatclear;
+int minutePasser;
+int secondePasser;
+int minuteTotal;
+int secondeTotal;
 int etat;
 int led_state;
 char secondes;
@@ -45,6 +50,10 @@ bool chrono = false;
 #define ledOrange 9
 #define ledRouge 8
 
+#define btnDroit 6
+#define btnMilieu 7
+#define btnGauche 13
+
 #define abcd 1
 #define abc 0
 #define a 0 || 1
@@ -55,6 +64,11 @@ bool chrono = false;
 
 void setup()
 { 
+  etatclear = 0;
+  minutePasser = 0;
+  secondePasser = 0;
+  minuteTotal = 0;
+  secondeTotal = 0;
   changement = 2;
   printLigne = a;
   typeLigne = abc;
@@ -62,6 +76,12 @@ void setup()
   etat = WORK;
   minutes = 2;
   secondes = 10;
+  pinMode(btnDroit, INPUT);
+  pinMode(7, INPUT);
+  pinMode(btnGauche, INPUT);
+  pinMode(ledVert, OUTPUT);
+  pinMode(ledOrange, OUTPUT);
+  pinMode(ledRouge, OUTPUT);
   Serial.begin(9600);
   lcd.begin(16, 4);
 }
@@ -81,6 +101,10 @@ void loop ()
   
 void actionconteur() // fonction principal (conteur).
 {
+  if (digitalRead(btnDroit) == LOW)
+  {
+    etat = MENU;
+  }
   conteur();
   printConteur();
   ledState();
@@ -94,51 +118,67 @@ void actionconteur() // fonction principal (conteur).
           
 void conteur ()
 {
-  
-  static unsigned long currentMillis = 0;
-  if ((millis() - currentMillis) > 1000)
+  if (digitalRead(7) == LOW)
   {
-    if (secondes > 0)
-      secondes --;
-    else if(minutes > 0) 
+    chrono = true;
+    while(chrono == true)
     {
-      secondes = 59;
-      minutes --;
+    sortieConteur();
+    printConteur();
+    ledState();
+    gestionLigne();
+    printmenu();
+    static unsigned long currentMillis = 0;
+    if ((millis() - currentMillis) > 1000)
+    {
+      if (secondes > 0)
+        secondes --;
+      else if(minutes > 0) 
+      {
+        secondes = 59;
+        minutes --;
+      }
+      if (minutes == 2 && secondes == 9)
+      {
+        Serial.print ("rouge");
+        color = rouge;
+      }
+      if (minutes == 2 && secondes == 0)
+      {
+        color = rouge;
+        Serial.print("rouge \n");
+      }
+      if (minutes >= 0 && secondes > 30) 
+      {
+         color = vert;
+         Serial.print("vert \n");
+      } 
+      if (minutes == 0 && secondes == 0) 
+      {
+         while (changement =! 0 && changement > 0)
+         {
+         changement --;
+         Serial.println(ligne);
+         }
+         color = rouge;
+         Serial.print("rouge \n");
+      } 
+      else if(minutes == 0 && secondes <= 30) 
+      {
+         color = orange;
+         Serial.print("orange \n");
+      }
+      currentMillis = millis();
     }
-    if (minutes == 2 && secondes == 9)
-    {
-      Serial.print ("rouge");
-      color = rouge;
     }
-    if (minutes == 2 && secondes == 0)
-    {
-      color = rouge;
-      Serial.print("rouge \n");
-    }
-    if (minutes >= 0 && secondes > 30) 
-    {
-       color = vert;
-       Serial.print("vert \n");
-    } 
-    if (minutes == 0 && secondes == 0) 
-    {
-       while (changement =! 0 && changement > 0)
-       {
-       changement --;
-       Serial.println(ligne);
-       }
-       color = rouge;
-       Serial.print("rouge \n");
-    } 
-    else if(minutes == 0 && secondes <= 30) 
-    {
-       color = orange;
-       Serial.print("orange \n");
-    }
-    currentMillis = millis();
   }
 }
+//---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+void sortieConteur()
+{
+    chrono == false;
+}
 //---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 void printConteur()
@@ -167,6 +207,9 @@ void ledState ()// sert a allumer la led correstondante a l'etat.
       lcd.print("      ");
       lcd.setCursor(5, 1);
       lcd.print("rouge");
+      digitalWrite(ledVert, LOW);
+      digitalWrite(ledOrange, LOW);
+      digitalWrite(ledRouge, HIGH);
     break;
     case vert:
       lcd.setCursor(0, 1);
@@ -175,6 +218,9 @@ void ledState ()// sert a allumer la led correstondante a l'etat.
       lcd.print("     ");
       lcd.setCursor(5, 1);
       lcd.print("vert");
+      digitalWrite(ledRouge, LOW);
+      digitalWrite(ledOrange, LOW);
+      digitalWrite(ledVert, HIGH);
     break;
     case orange:
       lcd.setCursor(0, 1);
@@ -182,7 +228,10 @@ void ledState ()// sert a allumer la led correstondante a l'etat.
       lcd.setCursor(5, 1);
       lcd.print("     ");
       lcd.setCursor(5, 1);
-      lcd.print("orange");
+      lcd.print("orange");      
+      digitalWrite(ledRouge, LOW);
+      digitalWrite(ledVert, LOW);
+      digitalWrite(ledOrange, HIGH);
     break;
   }
 }
@@ -195,52 +244,56 @@ void gestionLigne()
   {
     case abc:
       conteur();
-    if (changement == 2)
-    {
-      changement --;
-      Serial.println(changement);
-      Serial.print ("ligne initialiser à A");
-      Serial.print(ligne);
-      lcd.setCursor(-4, 2);
-      lcd.print("type abc");
-      lcd.setCursor(5, 2);
-      lcd.print("ligne:A");
-    }
-    while (changement == 0)
-    {
-      Serial.print(changement);
-      changement ++;
-      if(ligne = a)
+      switch (changement)
       {
-        Serial.print ("ligne changer de A à B (le probleme est la) \n");
-        Serial.println(ligne);
-        ligne = b;
-        lcd.setCursor(-4, 2);
-        lcd.print("type abc");
-        lcd.setCursor(5, 2);
-        lcd.print("ligne:B");
+        case 2:
+          changement --;
+          Serial.println(changement);
+          Serial.print ("ligne initialiser à A");
+          Serial.print(ligne);
+          lcd.setCursor(-4, 2);
+          lcd.print("type abc");
+          lcd.setCursor(5, 2);
+          lcd.print("ligne:A");
+        break;
+        
+        case 0:
+          Serial.print(changement);
+          changement ++;
+          if(ligne = a)
+          {
+            Serial.print ("ligne changer de A à B \n");
+            Serial.println(ligne);
+            ligne = b;
+            lcd.setCursor(-4, 2);
+            lcd.print("type abc");
+            lcd.setCursor(5, 2);
+            lcd.print("ligne:B");
+          }
+        else if(ligne = b)
+        {
+          Serial.print("ligne changer B à C \n");
+          Serial.println(ligne);
+          ligne = c;
+          lcd.setCursor(-4, 2);
+          lcd.print("type abc");
+          lcd.setCursor(5, 2);
+          lcd.print("ligne:C");
+        }
+        else if(ligne = c)
+        {
+          Serial.print("ligne changer C à A \n");
+          Serial.println(ligne);
+          ligne = a;
+          lcd.setCursor(-4, 2);
+          lcd.print("type abc");
+          lcd.setCursor(5, 2);
+          lcd.print("ligne:A");
+        }
+      break;
       }
-      else if(ligne = b)
-      {
-        Serial.print("ligne changer B à C \n");
-        Serial.println(ligne);
-        ligne = c;
-        lcd.setCursor(-4, 2);
-        lcd.print("type abc");
-        lcd.setCursor(5, 2);
-        lcd.print("ligne:C");
-      }
-      else if(ligne = c)
-      {
-        Serial.print("ligne changer C à A \n");
-        Serial.println(ligne);
-        ligne = a;
-        lcd.setCursor(-4, 2);
-        lcd.print("type abc");
-        lcd.setCursor(5, 2);
-        lcd.print("ligne:A");
-      }
-    }
+    break;
+    case abcd:
     break;
   }
   
@@ -262,16 +315,75 @@ void printmenu()
     if (chrono == true)
     {
       lcd.setCursor (-4, 3);
-      lcd.print ("     ");
-      lcd.setCursor (1, 3);
+      lcd.print ("       ");
+      lcd.setCursor (2, 3);
       lcd.print ("Stop ");
       lcd.setCursor (7, 3);
       lcd.print("     "); 
     }
 }
 
-//----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------  
+//----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
 void actionmenu() // setup de la carte.
 {
-  
+  while (etatclear == 0)
+  {
+    lcd.clear();
+    etatclear ++;
+  }
+  affichagemenu();
+  setupTemp();
+  setupLigne();
+  printSetupLigne();
+  printSetupTemp();
+}
+
+void affichagemenu()
+{
+
+}
+
+void printSetupLigne()
+{
+
+}
+
+void printSetupTemp()
+{
+  lcd.setCursor(0, 0);
+  lcd.print("setup temp");
+  lcd.setCursor (5, 1);
+  lcd.print ((int)minutes);
+  lcd.print (":");
+  if (secondes < 10)
+  {
+    lcd.print ("0");
+  }
+  lcd.print ((int)secondes);
+}
+
+void setupTemp()
+{
+  secondeTotal = secondes + secondePasser;
+  minuteTotal = minutes + minutePasser;
+  minuteTotal ++;
+  if (secondes > 59);
+  {
+    secondes = 0;
+    minuteTotal ++;
+  }
+  secondes == secondeTotal;
+  minutes == minuteTotal;
+}
+
+void setupLigne()
+{
+
 }
